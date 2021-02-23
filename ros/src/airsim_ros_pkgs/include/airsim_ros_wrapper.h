@@ -41,6 +41,7 @@ STRICT_MODE_ON
 #include <opencv2/opencv.hpp>
 #include <ros/callback_queue.h>
 #include <ros/console.h>
+#include <gazebo_msgs/ModelStates.h> // Gazebo's Tests
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/distortion_models.h>
 #include <sensor_msgs/Image.h>
@@ -233,12 +234,19 @@ private:
     void gimbal_angle_quat_cmd_cb(const airsim_ros_pkgs::GimbalAngleQuatCmd& gimbal_angle_quat_cmd_msg);
     void gimbal_angle_euler_cmd_cb(const airsim_ros_pkgs::GimbalAngleEulerCmd& gimbal_angle_euler_cmd_msg);
 
+    // Gazebo's Tests
+    void gazebo_modelstate_cb (const gazebo_msgs::ModelStates::ConstPtr& msg);
+
     // commands
     void car_cmd_cb(const airsim_ros_pkgs::CarControls::ConstPtr& msg, const std::string& vehicle_name);
     void update_commands();
 
     // state, returns the simulation timestamp best guess based on drone state timestamp, airsim needs to return timestap for environment
     ros::Time update_state();
+
+    // Gazebo's Tests
+    ros::Time update_state_with_gazebo();
+
     void update_and_publish_static_transforms(VehicleROS* vehicle_ros);
     void publish_vehicle_state();
 
@@ -311,6 +319,10 @@ private:
     ros::Subscriber vel_cmd_group_world_frame_sub_;
     ros::ServiceServer takeoff_group_srvr_;
     ros::ServiceServer land_group_srvr_;
+
+    // Gazebo's tests
+    bool gazebo_integration_;
+    ros::Subscriber gazebo_modelstate;
 
     AIRSIM_MODE airsim_mode_ = AIRSIM_MODE::DRONE;
 

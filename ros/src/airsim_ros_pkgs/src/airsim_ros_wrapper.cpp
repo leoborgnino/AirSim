@@ -99,6 +99,8 @@ void AirsimROSWrapper::initialize_ros()
     nh_private_.getParam("is_vulkan", is_vulkan_);
     nh_private_.getParam("update_airsim_control_every_n_sec", update_airsim_control_every_n_sec);
     nh_private_.getParam("publish_clock", publish_clock_);
+    //Gazebo's Tests
+    nh_private_.getParam("gazebo_integration", gazebo_integration_);
     nh_private_.param("world_frame_id", world_frame_id_, world_frame_id_);
     odom_frame_id_ = world_frame_id_ == AIRSIM_FRAME_ID ? AIRSIM_ODOM_FRAME_ID : ENU_ODOM_FRAME_ID;
     nh_private_.param("odom_frame_id", odom_frame_id_, odom_frame_id_);
@@ -175,6 +177,8 @@ void AirsimROSWrapper::create_ros_pubs_from_settings_json()
             drone->land_srvr = nh_private_.advertiseService<airsim_ros_pkgs::Land::Request, airsim_ros_pkgs::Land::Response>(curr_vehicle_name + "/land", 
                 boost::bind(&AirsimROSWrapper::land_srv_cb, this, _1, _2, vehicle_ros->vehicle_name) );
             // vehicle_ros.reset_srvr = nh_private_.advertiseService(curr_vehicle_name + "/reset",&AirsimROSWrapper::reset_srv_cb, this);
+	    	// Gazebo's Tests
+	    gazebo_modelstate = nh_private_.subscribe("/gazebo/model_states", 10, &AirsimROSWrapper::gazebo_modelstate_cb, this);
         }
         else
         {
@@ -319,6 +323,7 @@ void AirsimROSWrapper::create_ros_pubs_from_settings_json()
 
         takeoff_group_srvr_ = nh_private_.advertiseService("group_of_robots/takeoff", &AirsimROSWrapper::takeoff_group_srv_cb, this);
         land_group_srvr_ = nh_private_.advertiseService("group_of_robots/land", &AirsimROSWrapper::land_group_srv_cb, this);
+
     }
 
     // todo add per vehicle reset in AirLib API
@@ -951,6 +956,27 @@ ros::Time AirsimROSWrapper::airsim_timestamp_to_ros(const msr::airlib::TTimePoin
     return cur_time;
 }
 
+// Gazebo's tests
+void AirsimROSWrapper::gazebo_modelstate_cb (const gazebo_msgs::ModelStates::ConstPtr& msg)
+{
+  //std::cout << msg->pose[1].position.x << std::endl;
+  //std::cout << msg->pose[1].orientation.x << std::endl;
+  for (auto& vehicle_name_ptr_pair : vehicle_name_ptr_map_)
+    {
+      ros::Time vehicle_time;
+      // get drone state from airsim 
+      auto& vehicle_ros = vehicle_name_ptr_pair.second;
+
+       if (airsim_mode_ == AIRSIM_MODE::DRONE)
+        {
+	  auto drone = static_cast<MultiRotorROS*>(vehicle_ros.get());
+	  auto rpc = static_cast<msr::airlib::MultirotorRpcLibClient*>(airsim_client_.get());
+	  drone->curr_drone_state.kinematics_estimated.pose = Pose(Vector3r(msg->pose[1].position.x, msg->pose[1].position.y, msg->pose[1].position.z), Quaternionr(msg->pose[1].orientation.x,msg->pose[1].orientation.y , msg->pose[1].orientation.z, msg->pose[1].orientation.w));
+	}       
+    }
+}
+
+
 void AirsimROSWrapper::drone_state_timer_cb(const ros::TimerEvent& event)
 {
     try
@@ -959,8 +985,12 @@ void AirsimROSWrapper::drone_state_timer_cb(const ros::TimerEvent& event)
         origin_geo_point_pub_.publish(origin_geo_point_msg_);
 
         // get the basic vehicle pose and environmental state
-        const auto now = update_state();
-
+	ros::Time now;
+	if ( !gazebo_integration_ )
+	  const auto now = update_state();
+	else
+	  const auto now = update_state_with_gazebo();
+	
         // on init, will publish 0 to /clock as expected for use_sim_time compatibility
         if (!airsim_client_->simIsPaused())
         {
@@ -974,7 +1004,8 @@ void AirsimROSWrapper::drone_state_timer_cb(const ros::TimerEvent& event)
         }
 
         // publish vehicle state, odom, and all basic sensor types
-        publish_vehicle_state();
+	if ( !gazebo_integration_)
+	  publish_vehicle_state();
 
         // send any commands out to the vehicles
         update_commands();
@@ -997,6 +1028,38 @@ void AirsimROSWrapper::update_and_publish_static_transforms(VehicleROS* vehicle_
             static_tf_pub_.sendTransform(static_tf_msg);
         }
     }
+}
+
+ros::Time AirsimROSWrapper::update_state_with_gazebo()
+{
+  bool got_sim_time = false;
+  ros::Time curr_ros_time = ros::Time::now();
+
+  for (auto& vehicle_name_ptr_pair : vehicle_name_ptr_map_)
+    {
+      ros::Time vehicle_time;
+      // get drone state from airsim 
+      auto& vehicle_ros = vehicle_name_ptr_pair.second;
+
+      if (airsim_mode_ == AIRSIM_MODE::DRONE)
+        {
+	  auto drone = static_cast<MultiRotorROS*>(vehicle_ros.get());
+	  auto rpc = static_cast<msr::airlib::MultirotorRpcLibClient*>(airsim_client_.get());
+	  
+	  Pose goalPose = drone->curr_drone_state.kinematics_estimated.pose;
+	  rpc->simSetVehiclePose(goalPose, true, vehicle_ros->vehicle_name);
+
+	  vehicle_time = airsim_timestamp_to_ros(drone->curr_drone_state.timestamp);
+	  if (!got_sim_time)
+            {
+	      curr_ros_time = vehicle_time;
+	      got_sim_time = true;
+            }
+	}
+
+    }
+  
+  return curr_ros_time;
 }
 
 ros::Time AirsimROSWrapper::update_state()
@@ -1165,7 +1228,7 @@ void AirsimROSWrapper::update_commands()
             auto drone = static_cast<MultiRotorROS*>(vehicle_ros.get());
 
             // send control commands from the last callback to airsim
-            if (drone->has_vel_cmd)
+            if (drone->has_vel_cmd && !gazebo_integration_ )
             {
                 std::lock_guard<std::mutex> guard(drone_control_mutex_);
                 static_cast<msr::airlib::MultirotorRpcLibClient*>(airsim_client_.get())->moveByVelocityAsync(drone->vel_cmd.x, drone->vel_cmd.y, drone->vel_cmd.z, vel_cmd_duration_, 
@@ -1190,7 +1253,7 @@ void AirsimROSWrapper::update_commands()
     if (has_gimbal_cmd_)
     {
         std::lock_guard<std::mutex> guard(drone_control_mutex_);
-        airsim_client_->simSetCameraPose(gimbal_cmd_.camera_name, get_airlib_pose(0, 0, 0, gimbal_cmd_.target_quat), gimbal_cmd_.vehicle_name);
+        //airsim_client_->simSetCameraPose(gimbal_cmd_.camera_name, get_airlib_pose(0, 0, 0, gimbal_cmd_.target_quat), gimbal_cmd_.vehicle_name);
     }
 
     has_gimbal_cmd_ = false;
