@@ -45,3 +45,11 @@ if [[ "$DISTRO" == "focal" ]]; then
 else
     sudo pip3 install catkin-tools
 fi
+
+# Gazebo 9 or 7 for external dynamics
+sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+
+wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+
+# TODO maybe gazebo 9 is not supported by all ROS distro
+sudo apt-get install ros-$ROS_DISTRO-gazebo9-*
