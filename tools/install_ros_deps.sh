@@ -22,6 +22,9 @@ wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
 sudo apt-get update
 sudo apt-get install -qq ros-$ROS_DISTRO-ros-base
 
+# TODO maybe gazebo is not supported by all ROS distro
+sudo apt-get install ros-$ROS_DISTRO-gazebo-*
+
 echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
 
 sudo apt-get install python3-pip python3-yaml python3-setuptools
@@ -50,6 +53,3 @@ if [[ "$DISTRO" == "focal" ]]; then
 else
     sudo pip3 install catkin-tools
 fi
-
-# TODO maybe gazebo 9 is not supported by all ROS distro
-sudo apt-get install ros-$ROS_DISTRO-gazebo9-*

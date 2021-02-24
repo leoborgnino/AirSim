@@ -41,6 +41,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2_sensor_msgs
   tf2_geometry_msgs
+  gazebo_ros
+  gazebo_msgs
 )
 
 add_message_files(
@@ -72,12 +74,23 @@ generate_messages(
   std_msgs
   geometry_msgs
   geographic_msgs
+  gazebo_msgs
 )
 
 catkin_package(
   INCLUDE_DIRS include
   # LIBRARIES airsim_ros
   CATKIN_DEPENDS message_runtime roscpp std_msgs # nodelet 
+)
+
+# Gazebo's tests
+link_directories(${GAZEBO_LIBRARY_DIRS})
+include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
+
+catkin_package(
+  DEPENDS
+    roscpp
+    gazebo_ros
 )
 
 include_directories(
