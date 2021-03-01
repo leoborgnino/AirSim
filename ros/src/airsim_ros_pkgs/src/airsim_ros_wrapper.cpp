@@ -971,7 +971,7 @@ void AirsimROSWrapper::gazebo_modelstate_cb (const gazebo_msgs::ModelStates::Con
         {
 	  auto drone = static_cast<MultiRotorROS*>(vehicle_ros.get());
 	  auto rpc = static_cast<msr::airlib::MultirotorRpcLibClient*>(airsim_client_.get());
-	  drone->curr_drone_state.kinematics_estimated.pose = Pose(Vector3r(msg->pose[1].position.x, msg->pose[1].position.y, msg->pose[1].position.z), Quaternionr(msg->pose[1].orientation.x,msg->pose[1].orientation.y , msg->pose[1].orientation.z, msg->pose[1].orientation.w));
+	  drone->curr_drone_state.kinematics_estimated.pose = Pose(Vector3r(msg->pose[1].position.x, msg->pose[1].position.y, -msg->pose[1].position.z), Quaternionr(msg->pose[1].orientation.x,msg->pose[1].orientation.y , msg->pose[1].orientation.z, msg->pose[1].orientation.w));
 	}       
     }
 }

@@ -112,6 +112,10 @@ add_library(pd_position_controller_simple src/pd_position_controller_simple.cpp)
 add_dependencies(pd_position_controller_simple ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(pd_position_controller_simple ${catkin_EXPORTED_TARGETS})
 
+add_library(control_gazebo_example src/control_gazebo_example.cpp)
+add_dependencies(control_gazebo_example ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(control_gazebo_example ${catkin_EXPORTED_TARGETS})
+
 add_library(airsim_ros src/airsim_ros_wrapper.cpp)
 add_dependencies(airsim_ros ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(airsim_ros ${catkin_LIBRARIES} ${OpenCV_LIBS} yaml-cpp AirLib airsim_settings_parser)
@@ -122,10 +126,14 @@ target_link_libraries(airsim_node airsim_ros ${catkin_LIBRARIES} AirLib)
 add_executable(pd_position_controller_simple_node src/pd_position_controller_simple_node.cpp)
 target_link_libraries(pd_position_controller_simple_node pd_position_controller_simple airsim_ros ${catkin_LIBRARIES} AirLib)
 
+add_executable(control_gazebo_example_node src/control_gazebo_example_node.cpp)
+target_link_libraries(control_gazebo_example_node control_gazebo_example airsim_ros ${catkin_LIBRARIES} AirLib)
+
 install(TARGETS
     #list of nodes
     airsim_node
     pd_position_controller_simple_node
+    control_gazebo_example_node
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -133,6 +141,7 @@ install(TARGETS
     #list of shared libraries
     airsim_ros
     pd_position_controller_simple
+    control_gazebo_example
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
