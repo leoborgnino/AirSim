@@ -59,8 +59,11 @@ void PIDPositionController::initialize_ros()
 
     std::string vehicle_name;
 
-    while(vehicle_name == "");
-    nh_private_.getParam("/vehicle_name", vehicle_name);
+    while(vehicle_name == "")
+      {
+	nh_private_.getParam("/vehicle_name", vehicle_name);
+	ROS_INFO_STREAM("Waiting vehicle name");
+      }
 
     // ROS publishers
     airsim_vel_cmd_world_frame_pub_ = nh_private_.advertise<airsim_ros_pkgs::VelCmd>("/vel_cmd_world_frame", 1);
