@@ -59,7 +59,7 @@ void PIDPositionController::initialize_ros()
 
     std::string vehicle_name;
 
-    while (vehicle_name != "");
+    while(vehicle_name == "");
     nh_private_.getParam("/vehicle_name", vehicle_name);
 
     // ROS publishers
