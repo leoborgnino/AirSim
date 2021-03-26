@@ -23,6 +23,7 @@ PlanningExample::PlanningExample(const ros::NodeHandle &nh, const ros::NodeHandl
 
   first_time = true;
   has_started = true;
+  reached_checkpoint = true;
     
  }
 
@@ -45,6 +46,9 @@ void PlanningExample::initialize_ros()
 
     // Reset
     reset_svr = nh_.serviceClient<airsim_ros_pkgs::Land>("/airsim_node/reset");
+
+    // ROS Subscribers
+    reached_checkpoint_sub = nh_.subscribe("/airsim_node/Drone0/reached_goal", 10, &PlanningExample::reached_checkpoint_cb, this );
     
     // ROS Timers
     update_control_cmd_timer_ = nh_private_.createTimer(ros::Duration(update_control_every_n_sec), &PlanningExample::update_control_cmd_timer_cb, this);
@@ -53,16 +57,17 @@ void PlanningExample::initialize_ros()
 void PlanningExample::update_control_cmd_timer_cb(const ros::TimerEvent& event)
 {
 
-  if ( has_started && first_time )
+  if ( has_started && first_time && reached_checkpoint )
     {
       airsim_ros_pkgs::SetLocalPosition TargetPosition;
       
       TargetPosition.request.x = 5.0;
       TargetPosition.request.y = 0.0;
-      TargetPosition.request.z = 0.0;
+      TargetPosition.request.z = -5.0;
       TargetPosition.request.yaw= 0.0;
       
       set_local_pos_svr.call(TargetPosition);
+      
       ROS_INFO_STREAM("[Planning] Set Target Position x=" << TargetPosition.request.x << " y=" << TargetPosition.request.y << " z=" << TargetPosition.request.z << " yaw=" << TargetPosition.request.yaw );
 
       first_time = false;
@@ -70,3 +75,8 @@ void PlanningExample::update_control_cmd_timer_cb(const ros::TimerEvent& event)
 
 }
 
+void PlanningExample::reached_checkpoint_cb(const std_msgs::Bool& reached_checkpoint_msg)
+{
+  reached_checkpoint = reached_checkpoint_msg.data;
+  ROS_INFO_STREAM("[Planning] Reached Checkpoint " << reached_checkpoint );  
+}

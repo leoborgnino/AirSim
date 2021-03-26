@@ -7,6 +7,7 @@
 #include <airsim_ros_pkgs/Reset.h>
 #include <airsim_ros_pkgs/Takeoff.h>
 #include <airsim_ros_pkgs/Land.h>
+#include <std_msgs/Bool.h>
 #include <math_common.h>
 #include <utils.h>
 
@@ -15,8 +16,13 @@ class PlanningExample
  public:
   PlanningExample(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private);
 
+  // Timer update checkpoints to PD controller
   void update_control_cmd_timer_cb(const ros::TimerEvent& event);
 
+  // Subscriber Reached Checkpoint Callback
+  void reached_checkpoint_cb(const std_msgs::Bool& reached_checkpoint_msg);
+
+  // Initialization function
   void initialize_ros();
 
  private:
@@ -30,6 +36,9 @@ class PlanningExample
   ros::ServiceClient land_svr;
   ros::ServiceClient reset_svr;
 
+  ros::Subscriber reached_checkpoint_sub;
+
+  bool reached_checkpoint;
   bool has_started;
   bool first_time;
 };
