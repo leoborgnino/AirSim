@@ -41,6 +41,11 @@ class PlanningExample
   bool reached_checkpoint;
   bool has_started;
   bool first_time;
+  int cmd_cant=4;
+  double cmd_sequence[4][4]={{5.0,0.0,-5.0,0.0},{5.0,5.0,-10.0,0.0},{10.0,0.0,-10.0,0.0},{20.0,0.0,-5.0,0.0}};
+  int index=0;
+  
 };
 
 #endif /* _PLANNING_EXAMPLE_ */
+

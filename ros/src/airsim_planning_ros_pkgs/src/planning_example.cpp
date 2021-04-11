@@ -24,7 +24,6 @@ PlanningExample::PlanningExample(const ros::NodeHandle &nh, const ros::NodeHandl
   first_time = true;
   has_started = true;
   reached_checkpoint = true;
-    
  }
 
 void PlanningExample::initialize_ros()
@@ -56,22 +55,32 @@ void PlanningExample::initialize_ros()
 
 void PlanningExample::update_control_cmd_timer_cb(const ros::TimerEvent& event)
 {
-
-  if ( has_started && first_time && reached_checkpoint )
+  if (has_started && reached_checkpoint && index<cmd_cant)
     {
+      
       airsim_ros_pkgs::SetLocalPosition TargetPosition;
       
-      TargetPosition.request.x = 5.0;
-      TargetPosition.request.y = 0.0;
-      TargetPosition.request.z = -5.0;
-      TargetPosition.request.yaw= 0.0;
+      TargetPosition.request.x = cmd_sequence[index][0];
+      TargetPosition.request.y = cmd_sequence[index][1];
+      TargetPosition.request.z = cmd_sequence[index][2];
+      TargetPosition.request.yaw = cmd_sequence[index][3];
       
       set_local_pos_svr.call(TargetPosition);
       
       ROS_INFO_STREAM("[Planning] Set Target Position x=" << TargetPosition.request.x << " y=" << TargetPosition.request.y << " z=" << TargetPosition.request.z << " yaw=" << TargetPosition.request.yaw );
 
       first_time = false;
-    }
+      index+=1;
+      
+    }else if(has_started && reached_checkpoint && index==cmd_cant){
+  
+    airsim_ros_pkgs::Land land_req;
+  
+    land_req.request.waitOnLastTask = true;
+  
+    land_svr.call(land_req);
+    
+  }
 
 }
 

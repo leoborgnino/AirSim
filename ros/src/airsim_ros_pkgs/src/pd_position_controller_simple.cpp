@@ -66,7 +66,9 @@ void PIDPositionController::initialize_ros()
 
     // ROS publishers
     airsim_vel_cmd_world_frame_pub_ = nh_private_.advertise<airsim_ros_pkgs::VelCmd>("/airsim_node/" + vehicle_name + "/vel_cmd_world_frame", 10);
- 
+
+    reached_goal_pub = nh_private_.advertise<std_msgs::Bool>("/airsim_node/" + vehicle_name + "/reached_goal", 10);
+
     // ROS subscribers
     airsim_odom_sub_ = nh_.subscribe("/airsim_node/" + vehicle_name + "/odom_local_ned", 50, &PIDPositionController::airsim_odom_cb, this);
     home_geopoint_sub_ = nh_.subscribe("/airsim_node/home_geo_point", 50, &PIDPositionController::home_geopoint_cb, this);
@@ -103,7 +105,11 @@ void PIDPositionController::check_reached_goal()
 
     // todo save this in degrees somewhere to avoid repeated conversion
     if (diff_xyz < params_.reached_thresh_xyz && diff_yaw < math_common::deg2rad(params_.reached_yaw_degrees))
-        reached_goal_ = true; 
+      {
+        reached_goal_ = true;
+	reached_goal_pub_msg.data = reached_goal_;
+	reached_goal_pub.publish(reached_goal_pub_msg);
+      }
 }
 
 bool PIDPositionController::local_position_goal_srv_cb(airsim_ros_pkgs::SetLocalPosition::Request& request, airsim_ros_pkgs::SetLocalPosition::Response& response)
@@ -131,6 +137,8 @@ bool PIDPositionController::local_position_goal_srv_cb(airsim_ros_pkgs::SetLocal
         // todo fill response
         has_goal_ = true;
         reached_goal_ = false;
+	reached_goal_pub_msg.data = reached_goal_;
+	reached_goal_pub.publish(reached_goal_pub_msg);
         reset_errors(); // todo
         return true;
     }
@@ -156,6 +164,8 @@ bool PIDPositionController::local_position_goal_srv_override_cb(airsim_ros_pkgs:
     // todo fill response
     has_goal_ = true;
     reached_goal_ = false;
+    reached_goal_pub_msg.data = reached_goal_;
+    reached_goal_pub.publish(reached_goal_pub_msg);
     reset_errors(); // todo
     return true;
 }
@@ -214,6 +224,8 @@ bool PIDPositionController::gps_goal_srv_cb(airsim_ros_pkgs::SetGPSPosition::Req
         // todo fill response
         has_goal_ = true;
         reached_goal_ = false;
+	reached_goal_pub_msg.data = reached_goal_;
+	reached_goal_pub.publish(reached_goal_pub_msg);
         reset_errors(); // todo
         return true;
     }
@@ -265,6 +277,8 @@ bool PIDPositionController::gps_goal_srv_override_cb(airsim_ros_pkgs::SetGPSPosi
     // todo fill response
     has_goal_ = true;
     reached_goal_ = false;
+    reached_goal_pub_msg.data = reached_goal_;
+    reached_goal_pub.publish(reached_goal_pub_msg);
     reset_errors(); // todo
     return true;
 }
@@ -327,7 +341,7 @@ void PIDPositionController::compute_control_cmd()
     vel_cmd_.twist.linear.z = p_term_z + d_term_z;
     vel_cmd_.twist.angular.z = p_term_yaw + d_term_yaw; // todo
 
-    ROS_INFO_STREAM("[PIDPositionController] PID Errors." << std::endl << "x = "  << vel_cmd_.twist.linear.x  << std::endl << "y = "  << vel_cmd_.twist.linear.y  << std::endl << "z = "  << vel_cmd_.twist.linear.z  << std::endl << "yaw = "  << vel_cmd_.twist.angular.z);
+    //ROS_INFO_STREAM("[PIDPositionController] PID Errors." << std::endl << "x = "  << vel_cmd_.twist.linear.x  << std::endl << "y = "  << vel_cmd_.twist.linear.y  << std::endl << "z = "  << vel_cmd_.twist.linear.z  << std::endl << "yaw = "  << vel_cmd_.twist.angular.z);
 
 }
 
