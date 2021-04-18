@@ -16,6 +16,7 @@ STRICT_MODE_ON
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <std_msgs/Bool.h>
 #include <nav_msgs/Odometry.h>
 #include <math.h>
 #include <airsim_ros_pkgs/VelCmd.h>
@@ -128,6 +129,7 @@ private:
 
     nav_msgs::Odometry curr_odom_;
     airsim_ros_pkgs::VelCmd vel_cmd_;
+    std_msgs::Bool reached_goal_pub_msg;
     bool reached_goal_;
     bool has_goal_;
     bool has_odom_;
@@ -135,6 +137,7 @@ private:
     // todo check for odom msg being older than n sec
 
     ros::Publisher airsim_vel_cmd_world_frame_pub_;
+    ros::Publisher reached_goal_pub;
     ros::Subscriber airsim_odom_sub_;
     ros::Subscriber home_geopoint_sub_;
     ros::ServiceServer local_position_goal_srvr_;

@@ -83,6 +83,9 @@ void AirsimROSWrapper::initialize_airsim()
         origin_geo_point_ = airsim_client_->getHomeGeoPoint("");
         // todo there's only one global origin geopoint for environment. but airsim API accept a parameter vehicle_name? inside carsimpawnapi.cpp, there's a geopoint being assigned in the constructor. by? 
         origin_geo_point_msg_ = get_gps_msg_from_airsim_geo_point(origin_geo_point_);
+
+
+	airsim_client_->simCreateVoxelGrid(Vector3r(0,0,0), 100, 100, 100, 0.5, "/home/ingenia/map.binvox");
     }
     catch (rpc::rpc_error&  e)
     {
@@ -137,6 +140,9 @@ void AirsimROSWrapper::create_ros_pubs_from_settings_json()
     {
         auto& vehicle_setting = curr_vehicle_elem.second;
         auto curr_vehicle_name = curr_vehicle_elem.first;
+
+	nh_.setParam("/vehicle_name",curr_vehicle_name);
+
         set_nans_to_zeros_in_pose(*vehicle_setting);
        
         std::unique_ptr<VehicleROS> vehicle_ros = nullptr;
@@ -169,7 +175,7 @@ void AirsimROSWrapper::create_ros_pubs_from_settings_json()
             // bind multiple topics to a single callback, but keep track of which vehicle name it was by passing curr_vehicle_name as the 2nd argument 
             drone->vel_cmd_body_frame_sub = nh_private_.subscribe<airsim_ros_pkgs::VelCmd>(curr_vehicle_name + "/vel_cmd_body_frame", 1, 
                 boost::bind(&AirsimROSWrapper::vel_cmd_body_frame_cb, this, _1, vehicle_ros->vehicle_name)); // todo ros::TransportHints().tcpNoDelay();
-            drone->vel_cmd_world_frame_sub = nh_private_.subscribe<airsim_ros_pkgs::VelCmd>(curr_vehicle_name + "/vel_cmd_world_frame", 1, 
+            drone->vel_cmd_world_frame_sub = nh_private_.subscribe<airsim_ros_pkgs::VelCmd>(curr_vehicle_name + "/vel_cmd_world_frame", 10, 
                 boost::bind(&AirsimROSWrapper::vel_cmd_world_frame_cb, this, _1, vehicle_ros->vehicle_name));
 
             drone->takeoff_srvr = nh_private_.advertiseService<airsim_ros_pkgs::Takeoff::Request, airsim_ros_pkgs::Takeoff::Response>(curr_vehicle_name + "/takeoff", 
@@ -574,6 +580,9 @@ void AirsimROSWrapper::vel_cmd_world_frame_cb(const airsim_ros_pkgs::VelCmd::Con
     drone->vel_cmd.yaw_mode.is_rate = true;
     drone->vel_cmd.yaw_mode.yaw_or_rate = math_common::rad2deg(msg->twist.angular.z);
     drone->has_vel_cmd = true;
+
+    ROS_INFO_STREAM("[PIDPositionController] VEL CMD CALL.");
+
 }
 
 // this is kinda unnecessary but maybe it makes life easier for the end user. 
@@ -1235,6 +1244,7 @@ void AirsimROSWrapper::update_commands()
                     msr::airlib::DrivetrainType::MaxDegreeOfFreedom, drone->vel_cmd.yaw_mode, drone->vehicle_name);
             }
             drone->has_vel_cmd = false;
+	    
         }
         else
         {
