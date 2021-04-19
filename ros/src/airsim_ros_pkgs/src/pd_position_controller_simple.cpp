@@ -302,10 +302,10 @@ void PIDPositionController::update_control_cmd_timer_cb(const ros::TimerEvent& e
             has_goal_ = false;
             // dear future self, this function doesn't return coz we need to keep on actively hovering at last goal pose. don't act smart
         }
-        else
-        {
-            ROS_INFO_STREAM("[PIDPositionController] Moving to goal.");
-        }
+        //else
+        //{
+        //    ROS_INFO_STREAM("[PIDPositionController] Moving to goal.");
+        //}
     }
 
     // only compute and send control commands for hovering / moving to pose, if we received a goal at least once in the past  

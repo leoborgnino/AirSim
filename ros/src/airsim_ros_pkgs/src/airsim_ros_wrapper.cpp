@@ -581,7 +581,7 @@ void AirsimROSWrapper::vel_cmd_world_frame_cb(const airsim_ros_pkgs::VelCmd::Con
     drone->vel_cmd.yaw_mode.yaw_or_rate = math_common::rad2deg(msg->twist.angular.z);
     drone->has_vel_cmd = true;
 
-    ROS_INFO_STREAM("[PIDPositionController] VEL CMD CALL.");
+    //ROS_INFO_STREAM("[PIDPositionController] VEL CMD CALL.");
 
 }
 

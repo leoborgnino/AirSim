@@ -8,6 +8,12 @@
 #include <airsim_ros_pkgs/Takeoff.h>
 #include <airsim_ros_pkgs/Land.h>
 #include <std_msgs/Bool.h>
+#include <sensor_msgs/Image.h>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 class MonoslamExample
 {
@@ -15,10 +21,10 @@ class MonoslamExample
   MonoslamExample(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private);
 
   // Timer update checkpoints to PD controller
-  void update_control_cmd_timer_cb(const ros::TimerEvent& event);
+  void process_image_cmd_timer_cb(const ros::TimerEvent& event);
 
-  // Subscriber Reached Checkpoint Callback
-  void reached_checkpoint_cb(const std_msgs::Bool& reached_checkpoint_msg);
+  // Subscriber Image Received
+  void image_received_cb(const sensor_msgs::Image& reached_checkpointimage_received_msg);
 
   // Initialization function
   void initialize_ros();
@@ -27,21 +33,12 @@ class MonoslamExample
   ros::NodeHandle nh_;
   ros::NodeHandle nh_private_;
 
-  ros::Timer update_control_cmd_timer_;
+  ros::Timer process_image_cmd_timer_;
 
-  ros::ServiceClient set_local_pos_svr;
-  ros::ServiceClient takeoff_svr;
-  ros::ServiceClient land_svr;
-  ros::ServiceClient reset_svr;
+  ros::Subscriber image_received_sub;
 
-  ros::Subscriber reached_checkpoint_sub;
-
-  bool reached_checkpoint;
   bool has_started;
   bool first_time;
-  int cmd_cant=4;
-  double cmd_sequence[4][4]={{5.0,0.0,-5.0,0.0},{5.0,5.0,-10.0,0.0},{10.0,0.0,-10.0,0.0},{20.0,0.0,-5.0,0.0}};
-  int index=0;
   
 };
 

@@ -11,5 +11,9 @@
         <param name="update_control_every_n_sec" type="double" value="0.01" /> <!-- this needs to be in sync with airsim_ros_wrapper? -->
     </node>
 
+    	 <node name="monoslam_node" pkg="airsim_monoslam_ros_pkgs" type="monoslam_node" output="screen">
+        <param name="process_image_every_n_sec" type="double" value="1" /> <!-- this needs to be in sync with airsim_ros_wrapper? -->
+    </node>
+
 
 </launch>
