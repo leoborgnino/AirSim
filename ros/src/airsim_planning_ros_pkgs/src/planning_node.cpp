@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "planning_example.h"
+#include <ros/spinner.h>
 
 int main(int argc, char ** argv)
 {
