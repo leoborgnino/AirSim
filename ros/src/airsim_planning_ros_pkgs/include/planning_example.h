@@ -8,8 +8,6 @@
 #include <airsim_ros_pkgs/Takeoff.h>
 #include <airsim_ros_pkgs/Land.h>
 #include <std_msgs/Bool.h>
-#include <math_common.h>
-#include <utils.h>
 
 class PlanningExample
 {
