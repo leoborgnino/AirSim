@@ -289,7 +289,7 @@ void PIDPositionController::update_control_cmd_timer_cb(const ros::TimerEvent& e
     // if no odom, don't do anything. 
     if (!has_odom_)
     {
-        ROS_ERROR_STREAM("[PIDPositionController] Waiting for odometry!");
+      //ROS_ERROR_STREAM("[PIDPositionController] Waiting for odometry!");
         return;
     }
 

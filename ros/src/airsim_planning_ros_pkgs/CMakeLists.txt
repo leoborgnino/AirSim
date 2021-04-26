@@ -12,11 +12,22 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   airsim_ros_pkgs
-)
+  octomap_ros
+  octomap_msgs
+  geometry_msgs
+  gazebo_ros
+  )
+
+
+find_package(gazebo REQUIRED)
+include_directories(${GAZEBO_INCLUDE_DIRS})
+link_directories(${GAZEBO_LIBRARY_DIRS})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIRS})
+add_definitions(${EIGEN3_DEFINITIONS})
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -68,10 +79,6 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -106,7 +113,7 @@ catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES airsim_planning_ros_pkgs
 #  CATKIN_DEPENDS roscpp rospy std_msgs
-  CATKIN_DEPENDS roscpp std_msgs
+CATKIN_DEPENDS roscpp std_msgs gazebo_ros
 )
 
 ###########
@@ -122,12 +129,20 @@ include_directories(
 )
 
 ## Declare a C++ library
+add_library(file src/file.cpp)
+add_dependencies(file ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(file ${catkin_EXPORTED_TARGETS})
+
+add_library(binvox src/binvox.cpp)
+add_dependencies(binvox ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(binvox ${catkin_EXPORTED_TARGETS})
+
 add_library(planning_example src/planning_example.cpp)
 add_dependencies(planning_example ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(planning_example ${catkin_EXPORTED_TARGETS})
 
 add_executable(planning_node src/planning_node.cpp)
-target_link_libraries(planning_node planning_example airsim_ros ${catkin_LIBRARIES} AirLib)
+target_link_libraries(planning_node planning_example file binvox airsim_ros ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} AirLib)
 
 install(TARGETS
     #list of nodes
@@ -138,6 +153,8 @@ install(TARGETS
 install(TARGETS 
     #list of shared libraries
     planning_example
+    binvox
+    file
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
